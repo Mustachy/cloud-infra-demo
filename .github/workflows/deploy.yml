@@ -29,17 +29,17 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t flask-app ./app
+          docker build -t cloud-demo-app ./app
 
       - name: Tag Docker image
         run: |
-          docker tag flask-app:latest \
-          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/flask-app:latest
+          docker tag cloud-demo-app:latest \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/cloud-demo-app:latest
 
       - name: Push image to ECR
         run: |
           docker push \
-          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/flask-app:latest
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/cloud-demo-app:latest
 
       - name: Setup SSH key
         run: |
@@ -50,15 +50,18 @@ jobs:
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
           docker login --username AWS --password-stdin \
           ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
-          docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/flask-app:latest
+          docker pull \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/cloud-demo-app:latest
 
-          docker stop flask-app || true
-          docker rm flask-app || true
+          docker stop cloud-demo-app || true
+          docker rm cloud-demo-app || true
 
-          docker run -d -p 80:5000 --name flask-app \
-          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/flask-app:latest
+          docker run -d -p 80:5000 --name cloud-demo-app \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/cloud-demo-app:latest
+
           EOF
